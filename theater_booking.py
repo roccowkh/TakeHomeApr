@@ -156,6 +156,7 @@ def book_tickets(theater):
         print("Enter blank to accept seat selection, or enter a new seating")
         print("position")
         print("> ", end="")
+        print()
         new_pos = input()
         
         if not new_pos:
