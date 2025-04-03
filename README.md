@@ -15,16 +15,17 @@ A command-line theater ticket booking system that allows users to book movie tic
 - Python 3.13.2 or higher
 - macOS 15.4 or higher (may work on other platforms)
 
-- ## Usage
+## Usage
 
 Run the program: python3 theater_booking.py
 Run the unit test: python3 -m test_theater_booking
 
-## Assumption
+## Assumptions
 - When overflowing to the next row, start from middle
-- When filling the current row, if there's space ont the left, fill them after the spaces on the right are occupied
-- columns indicator  with 2 digits will affect the layout, modified to use two lines to display for better looking
+- When filling the current row, if there's space on the left, fill them after the spaces on the right are occupied
+- Columns indicator with 2 digits will affect the layout, modified to use two lines to display for better looking
+- SCREEN text is displayed with extra spacing between letters for better visibility
 - I made up all the error messages
 - There's no need to save the record after the program exit
-- Booking Id always starts with  HKG and 4 digits, there's no need to handle the case of 10000 orders as there will never be 10000 seats
-- middle of 50 is 25 not 24
+- Booking Id always starts with HKG and 4 digits, there's no need to handle the case of 10000 orders as there will never be 10000 seats
+- Middle of 50 is 25 not 24
