@@ -321,6 +321,7 @@ def check_booking(theater):
 def get_theater_setup():
     while True:
         try:
+            print()
             print("Please define movie title and seating map in")
             print("[Title][Row][SeatsPerRow] format:")
             print("> ", end="")
