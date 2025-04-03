@@ -1,4 +1,5 @@
 import string
+from typing import Optional
 
 class Theater:
     def __init__(self, movie_name, rows, seats_per_row):
@@ -200,28 +201,58 @@ def find_default_seats(seating_map, num_tickets, start_pos=None):
     
     return seats if len(seats) == num_tickets else []
 
-def book_tickets(theater):
-    print("Enter the number of tickets to book, or enter blank to go back to the main menu:")
-    print("> ", end="")
-    tickets_input = input()
-    print()  # Add empty line after input
-    
+def validate_ticket_quantity(tickets_input: str, available_seats: int) -> Optional[int]:
+    """
+    Validate the ticket quantity input.
+    Returns the number of tickets if valid, None otherwise.
+    """
     if not tickets_input:
-        return
+        return None
         
     try:
         num_tickets = int(tickets_input)
         if num_tickets <= 0:
             print("Please enter a positive number of tickets.")
-            print()  # Add empty line after error message
-            return
-        if num_tickets > theater.get_available_seats():
-            print(f"Sorry, only {theater.get_available_seats()} seats available.")
-            print()  # Add empty line after error message
-            return
+            print()
+            return None
+        if num_tickets > available_seats:
+            print(f"Sorry, only {available_seats} seats available.")
+            print()
+            return None
+        return num_tickets
     except ValueError:
         print("Please enter a valid number.")
-        print()  # Add empty line after error message
+        print()
+        return None
+
+def validate_seat_position(position: str, theater, seating_map) -> Optional[tuple]:
+    """
+    Validate the seat position input.
+    Returns (row, col) tuple if valid, None otherwise.
+    """
+    start_pos = parse_seat_position(position, theater.rows, theater.seats_per_row)
+    if not start_pos:
+        print("Invalid position. Please try again.")
+        print()
+        return None
+    
+    # Check if seat is already taken
+    row, col = start_pos
+    if seating_map[row][col] is not None:
+        print("Sorry, this position is already taken. Please select another position.")
+        print()
+        return None
+        
+    return start_pos
+
+def book_tickets(theater):
+    print("Enter the number of tickets to book, or enter blank to go back to the main menu:")
+    print("> ", end="")
+    tickets_input = input()
+    print()
+    
+    num_tickets = validate_ticket_quantity(tickets_input, theater.get_available_seats())
+    if num_tickets is None:
         return
     
     booking_id = theater.generate_booking_id()
@@ -240,17 +271,8 @@ def book_tickets(theater):
         if not new_pos:
             break
             
-        start_pos = parse_seat_position(new_pos, theater.rows, theater.seats_per_row)
-        if not start_pos:
-            print("Invalid position. Please try again.")
-            print()
-            continue
-        
-        # Add check for taken seat
-        row, col = start_pos
-        if theater.seating_map[row][col] is not None:
-            print("Sorry, this position is already taken. Please select another position.")
-            print()
+        start_pos = validate_seat_position(new_pos, theater, theater.seating_map)
+        if start_pos is None:
             continue
             
         new_seats = find_default_seats(theater.seating_map, num_tickets, start_pos)
