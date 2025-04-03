@@ -17,11 +17,14 @@ class Theater:
         return booking_id
 
 def display_seating_map(seating_map, selected_seats=None):
-    total_width = len(seating_map[0]) * 2  # Calculate width based on seats
+    seats_per_row = len(seating_map[0])
+    # Calculate width based on actual dots display (2 spaces per seat)
+    total_width = 2 * seats_per_row  # Each seat takes 2 spaces (" •")
     
     # Center the word "SCREEN"
-    print("\n" + "SCREEN".center(total_width + 2))  # +2 for the row letter and space
-    print("—" + "-" * total_width)
+    print("\n" + "SCREEN".center(total_width + 2))
+    # Match exactly: 2 for "A ", then 2 per seat for " •"
+    print("-" * (total_width + 2))  # Total width plus row letter and space
     
     # Display seats
     for row_idx in range(len(seating_map)-1, -1, -1):
@@ -30,15 +33,31 @@ def display_seating_map(seating_map, selected_seats=None):
         seats = []
         for col_idx in range(len(row)):
             if selected_seats and (row_idx, col_idx) in selected_seats:
-                seats.append("#")  # Selected seats
+                seats.append(" #")  # Selected seats
             elif row[col_idx] is not None:
-                seats.append("o")  # Booked seats
+                seats.append(" o")  # Booked seats
             else:
-                seats.append("•")  # Available seats
-        print(f"{row_letter} {' '.join(seats)}")
+                seats.append(" •")  # Available seats
+        print(f"{row_letter} {''.join(seats)}")
     
     # Print column numbers aligned with seats
-    print("  " + ' '.join(str(i+1) for i in range(len(seating_map[0]))))
+    first_line = "  "  # Space for row letter and first space
+    second_line = "  "  # Space for row letter and first space
+    has_double_digits = False
+    
+    for i in range(seats_per_row):
+        num = i + 1
+        if num < 10:
+            first_line += f" {num}"  # Single digits on first line
+            second_line += "  "  # Skip second line for single digits
+        else:
+            has_double_digits = True
+            first_line += f" {num//10}"  # Tens on first line
+            second_line += f" {num%10}"  # Ones on second line
+    
+    print(first_line.rstrip())
+    if has_double_digits:
+        print(second_line.rstrip())
 
 def parse_seat_position(position, rows, seats_per_row):
     if not position:
