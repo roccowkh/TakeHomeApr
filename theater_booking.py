@@ -66,38 +66,44 @@ def find_default_seats(seating_map, num_tickets, start_pos=None):
     else:
         # Start from furthest row from screen (row 0, which is A)
         current_row = 0
-        # Start from middle of row, adjusting for even-numbered seat counts
+        # Start from middle of row
         middle = (seats_per_row - 1) // 2
-        
-        # If row is empty, center the seats
-        if all(seat is None for seat in seating_map[current_row]):
-            start_col = middle - ((num_tickets - 1) // 2)
-        else:
-            # If row has some seats taken, start from middle
-            start_col = middle
+        start_col = middle - ((num_tickets - 1) // 2)
     
     while current_row < rows and len(seats) < num_tickets:
         middle = (seats_per_row - 1) // 2
+        remaining_tickets = num_tickets - len(seats)
         
-        # If row is empty, try to center the remaining seats
-        if all(seat is None for seat in seating_map[current_row]):
-            # Try filling from center outwards
-            left = middle - ((num_tickets - 1) // 2)
-            right = left + num_tickets - 1
+        # Check if row is empty
+        is_empty_row = all(seat is None for seat in seating_map[current_row])
+        
+        if is_empty_row:
+            # For empty rows, center the remaining tickets
+            left = middle - ((remaining_tickets - 1) // 2)
+            right = left + remaining_tickets - 1
             
+            # Adjust if we go out of bounds
+            if left < 0:
+                left = 0
+                right = min(seats_per_row - 1, remaining_tickets - 1)
+            elif right >= seats_per_row:
+                right = seats_per_row - 1
+                left = max(0, right - remaining_tickets + 1)
+                
+            # Try filling the current row with available seats
             for col in range(left, right + 1):
                 if col >= 0 and col < seats_per_row and len(seats) < num_tickets:
                     if seating_map[current_row][col] is None:
                         seats.append((current_row, col))
         else:
-            # If row has seats taken, fill from middle to right first
+            # For partially filled rows, fill right side first
             col = middle
             while col < seats_per_row and len(seats) < num_tickets:
                 if seating_map[current_row][col] is None:
                     seats.append((current_row, col))
                 col += 1
             
-            # Then fill from middle-1 to left if needed
+            # Then fill left side if needed
             col = middle - 1
             while col >= 0 and len(seats) < num_tickets:
                 if seating_map[current_row][col] is None:
