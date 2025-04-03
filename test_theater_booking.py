@@ -1,7 +1,7 @@
 import unittest
 from theater_booking import (
     Theater, find_default_seats, parse_seat_position, 
-    get_theater_setup, book_tickets
+    get_theater_setup, book_tickets, check_booking
 )
 
 class TestTheaterBooking(unittest.TestCase):
@@ -191,6 +191,47 @@ class TestTheaterBooking(unittest.TestCase):
             mock_print.assert_any_call("Sorry, this position is already taken. Please select another position.")
             # Verify final state after successful booking from A7
             self.assertEqual(self.theater.get_available_seats(), 43)  # 50 - 3 - 4 = 43
+
+    def test_invalid_seat_selection(self):
+        """Test invalid seat selection inputs"""
+        from unittest.mock import patch
+        
+        # Test cases for invalid seat positions
+        invalid_inputs = [
+            "A",        # Too short
+            "AA1",      # Invalid format
+            "12",       # No row letter
+            "A0",       # Invalid column number
+            "A-1"       # Negative column number
+        ]
+        
+        for invalid_input in invalid_inputs:
+            with patch('builtins.input', side_effect=["2", invalid_input, ""]), \
+                 patch('builtins.print') as mock_print:
+                result = book_tickets(self.theater)
+                mock_print.assert_any_call("Invalid position. Please try again.")
+
+    def test_check_booking(self):
+        """Test checking existing and non-existing bookings"""
+        from unittest.mock import patch
+        
+        # Make a booking first
+        booking_id = self.theater.generate_booking_id()
+        seats = [(0, 3), (0, 4), (0, 5)]
+        for row, col in seats:
+            self.theater.seating_map[row][col] = booking_id
+        
+        # Test valid booking check
+        with patch('builtins.input', side_effect=[booking_id, ""]), \
+             patch('builtins.print') as mock_print:
+            check_booking(self.theater)
+            mock_print.assert_any_call(f"Booking id: {booking_id}:")
+        
+        # Test non-existent booking
+        with patch('builtins.input', side_effect=["INVALID", ""]), \
+             patch('builtins.print') as mock_print:
+            check_booking(self.theater)
+            mock_print.assert_any_call("No booking found with id: INVALID")
 
 if __name__ == '__main__':
     unittest.main() 
