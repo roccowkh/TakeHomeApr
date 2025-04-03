@@ -175,6 +175,34 @@ def book_tickets(theater):
     print(f"Booking id: {booking_id} confirmed")
     print()
 
+def check_booking(theater):
+    while True:
+        print()
+        print("Enter booking id, or enter blank to go back to the main menu:")
+        print("> ", end="")
+        booking_id = input().strip()
+        print()  # Add empty line after input
+        
+        if not booking_id:
+            return
+            
+        # Find all seats with this booking ID
+        booked_seats = []
+        for row_idx, row in enumerate(theater.seating_map):
+            for col_idx, seat in enumerate(row):
+                if seat == booking_id:
+                    booked_seats.append((row_idx, col_idx))
+        
+        if not booked_seats:
+            print(f"No booking found with id: {booking_id}")
+            print()
+            continue  # Changed from return to continue to keep loop going
+        
+        print(f"Booking id: {booking_id}:")
+        print("Selected seats:")
+        display_seating_map(theater.seating_map, booked_seats)
+        print()
+
 def get_theater_setup():
     while True:
         try:
@@ -222,7 +250,7 @@ def main():
         if choice == "1":
             book_tickets(theater)
         elif choice == "2":
-            print("Check bookings - To be implemented")
+            check_booking(theater)
         elif choice == "3":
             break
         else:
