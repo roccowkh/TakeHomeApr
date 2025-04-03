@@ -252,6 +252,8 @@ def main():
         elif choice == "2":
             check_booking(theater)
         elif choice == "3":
+            print()
+            print("Thank you for using Rocket Cinemas system. Bye!")
             break
         else:
             print("Invalid selection. Please try again.")
