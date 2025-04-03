@@ -164,6 +164,7 @@ def book_tickets(theater):
         start_pos = parse_seat_position(new_pos, theater.rows, theater.seats_per_row)
         if not start_pos:
             print("Invalid position. Please try again.")
+            print()
             continue
             
         new_seats = find_default_seats(theater.seating_map, num_tickets, start_pos)
@@ -263,6 +264,7 @@ def main():
             break
         else:
             print("Invalid selection. Please try again.")
+            print()
 
 if __name__ == "__main__":
     main() 
