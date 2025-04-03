@@ -56,73 +56,133 @@ def parse_seat_position(position, rows, seats_per_row):
         return (row, col)
     return None
 
-def find_default_seats(seating_map, num_tickets, start_pos=None):
-    rows = len(seating_map)
+def find_consecutive_seats(seating_map, current_row, num_tickets):
+    """Find best consecutive sequence of seats in a row"""
+    seats_per_row = len(seating_map[0])
+    middle = (seats_per_row - 1) // 2
+    best_seats = []
+    
+    # Try sequences starting from each position around middle
+    for start in range(max(0, middle - num_tickets), seats_per_row - num_tickets + 1):
+        consecutive_seats = []
+        for col in range(start, start + num_tickets):
+            if col >= seats_per_row or seating_map[current_row][col] is not None:
+                consecutive_seats = []
+                break
+            consecutive_seats.append((current_row, col))
+        
+        if len(consecutive_seats) == num_tickets:
+            # If it's closer to middle than current best, use it
+            if not best_seats or abs(middle - start) < abs(middle - best_seats[0][1]):
+                best_seats = consecutive_seats
+    
+    return best_seats
+
+def find_seats_from_middle(seating_map, current_row, num_tickets):
+    """Find seats by filling from middle outwards"""
+    seats_per_row = len(seating_map[0])
+    middle = (seats_per_row - 1) // 2
+    seats = []
+    
+    # Fill right side first
+    col = middle
+    while col < seats_per_row and len(seats) < num_tickets:
+        if seating_map[current_row][col] is None:
+            seats.append((current_row, col))
+        col += 1
+    
+    # Then fill left side if needed
+    col = middle - 1
+    while col >= 0 and len(seats) < num_tickets:
+        if seating_map[current_row][col] is None:
+            seats.append((current_row, col))
+        col -= 1
+    
+    return seats
+
+def find_seats_in_empty_row(seating_map, current_row, num_tickets):
+    """Find centered seats in an empty row"""
+    seats_per_row = len(seating_map[0])
+    middle = (seats_per_row - 1) // 2
+    seats = []
+    
+    left = middle - ((num_tickets - 1) // 2)
+    right = left + num_tickets - 1
+    
+    # Adjust if we go out of bounds
+    if left < 0:
+        left = 0
+        right = min(seats_per_row - 1, num_tickets - 1)
+    elif right >= seats_per_row:
+        right = seats_per_row - 1
+        left = max(0, right - num_tickets + 1)
+    
+    # Try filling the row
+    for col in range(left, right + 1):
+        if col >= 0 and col < seats_per_row and len(seats) < num_tickets:
+            if seating_map[current_row][col] is None:
+                seats.append((current_row, col))
+    
+    return seats
+
+def find_seats_from_position(seating_map, start_pos, num_tickets):
+    """Find seats starting from a specific position"""
+    current_row, start_col = start_pos
     seats_per_row = len(seating_map[0])
     seats = []
     
-    if start_pos:
-        current_row, start_col = start_pos
-    else:
-        # Start from furthest row from screen (row 0, which is A)
-        current_row = 0
-        # Start from middle of row
-        middle = (seats_per_row - 1) // 2
-        start_col = middle - ((num_tickets - 1) // 2)
+    # Fill right from start position
+    col = start_col
+    while col < seats_per_row and len(seats) < num_tickets:
+        if seating_map[current_row][col] is None:
+            seats.append((current_row, col))
+        col += 1
     
+    # Fill left if needed
+    col = start_col - 1
+    while col >= 0 and len(seats) < num_tickets:
+        if seating_map[current_row][col] is None:
+            seats.append((current_row, col))
+        col -= 1
+    
+    return seats
+
+def find_default_seats(seating_map, num_tickets, start_pos=None):
+    """Main function to find best available seats"""
+    rows = len(seating_map)
+    seats = []
+    
+    if start_pos:
+        current_row, _ = start_pos
+        seats = find_seats_from_position(seating_map, start_pos, num_tickets)
+        if len(seats) < num_tickets:
+            current_row += 1
+    else:
+        current_row = 0
+    
+    # Continue with remaining rows if needed
     while current_row < rows and len(seats) < num_tickets:
-        middle = (seats_per_row - 1) // 2
         remaining_tickets = num_tickets - len(seats)
-        
-        # Check if row is empty
         is_empty_row = all(seat is None for seat in seating_map[current_row])
         
         if is_empty_row:
-            # For empty rows, center the remaining tickets
-            left = middle - ((remaining_tickets - 1) // 2)
-            right = left + remaining_tickets - 1
-            
-            # Adjust if we go out of bounds
-            if left < 0:
-                left = 0
-                right = min(seats_per_row - 1, remaining_tickets - 1)
-            elif right >= seats_per_row:
-                right = seats_per_row - 1
-                left = max(0, right - remaining_tickets + 1)
-                
-            # Try filling the current row with available seats
-            for col in range(left, right + 1):
-                if col >= 0 and col < seats_per_row and len(seats) < num_tickets:
-                    if seating_map[current_row][col] is None:
-                        seats.append((current_row, col))
+            new_seats = find_seats_in_empty_row(seating_map, current_row, remaining_tickets)
         else:
-            # For partially filled rows, fill right side first
-            col = middle
-            while col < seats_per_row and len(seats) < num_tickets:
-                if seating_map[current_row][col] is None:
-                    seats.append((current_row, col))
-                col += 1
-            
-            # Then fill left side if needed
-            col = middle - 1
-            while col >= 0 and len(seats) < num_tickets:
-                if seating_map[current_row][col] is None:
-                    seats.append((current_row, col))
-                col -= 1
+            # Try consecutive seats first
+            new_seats = find_consecutive_seats(seating_map, current_row, remaining_tickets)
+            if not new_seats:
+                new_seats = find_seats_from_middle(seating_map, current_row, remaining_tickets)
         
-        # Move to next row if we still need more seats
-        if len(seats) < num_tickets:
-            current_row += 1
-            
-    # Sort seats within each row to maintain left-to-right order
+        seats.extend(new_seats)
+        current_row += 1
+    
+    # Sort seats within each row
     seats.sort()
     
     return seats if len(seats) == num_tickets else []
 
 def book_tickets(theater):
-    print()
-    print("Enter the number of tickets to book, or enter blank to go back to")
-    print("the main menu:")
+    print("Enter the number of tickets to book, or enter blank to go back to the main menu:")
     print("> ", end="")
     tickets_input = input()
     print()  # Add empty line after input
@@ -153,11 +213,10 @@ def book_tickets(theater):
         print("Selected seats:")
         display_seating_map(theater.seating_map, selected_seats)
         
-        print("Enter blank to accept seat selection, or enter a new seating")
-        print("position")
+        print("Enter blank to accept seat selection, or enter a new seating position")
         print("> ", end="")
-        print()
         new_pos = input()
+        print()
         
         if not new_pos:
             break
@@ -165,6 +224,13 @@ def book_tickets(theater):
         start_pos = parse_seat_position(new_pos, theater.rows, theater.seats_per_row)
         if not start_pos:
             print("Invalid position. Please try again.")
+            print()
+            continue
+        
+        # Add check for taken seat
+        row, col = start_pos
+        if theater.seating_map[row][col] is not None:
+            print("Sorry, this position is already taken. Please select another position.")
             print()
             continue
             
@@ -218,6 +284,7 @@ def get_theater_setup():
             print("[Title][Row][SeatsPerRow] format:")
             print("> ", end="")
             setup = input().split()
+            print()
             
             if len(setup) != 3:
                 print("Error: Please provide all three values (Title, Rows, Seats per Row)")
@@ -241,19 +308,20 @@ def get_theater_setup():
             print("Error: Row and seats per row must be numbers")
 
 def main():
-    print("Welcome to Rocket Cinemas")
     
     # Get initial theater setup
     title, rows, seats_per_row = get_theater_setup()
     theater = Theater(title, rows, seats_per_row)
     
     while True:
+        print("Welcome to Rocket Cinemas")
         print(f"[1] Book tickets for {theater.movie_name} ({theater.get_available_seats()} seats available)")
         print("[2] Check bookings")
         print("[3] Exit")
         print("Please enter your selection:")
         print("> ", end="")
         choice = input()
+        print()
         
         if choice == "1":
             book_tickets(theater)
