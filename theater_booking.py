@@ -22,8 +22,8 @@ def display_seating_map(seating_map, selected_seats=None):
     # Calculate width based on actual dots display (2 spaces per seat)
     total_width = 2 * seats_per_row  # Each seat takes 2 spaces (" •")
     
-    # Center the word "SCREEN"
-    print("\n" + "SCREEN".center(total_width + 2))
+    # Center the word "SCREEN" with spaces between letters
+    print("\n" + " ".join("SCREEN").center(total_width + 2))
     # Match exactly: 2 for "A ", then 2 per seat for " •"
     print("-" * (total_width + 2))  # Total width plus row letter and space
     
